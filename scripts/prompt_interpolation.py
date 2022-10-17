@@ -85,7 +85,7 @@ class Script(scripts.Script):
         images.append(processed.images[0])
 
         p.prompt = self.target_prompt
-        if self.target_seed is not None:
+        if self.target_seed is not None and self.target_seed != '':
             p.seed = int(self.target_seed)
         # Sample the target prompt now
         print("Sampling the target prompt")
