@@ -6,6 +6,9 @@ import math
 from modules import processing
 
 
+"""
+From https://discuss.pytorch.org/t/help-regarding-slerp-function-for-generative-model-sampling/32475
+"""
 def slerp(val, low, high):
     low_norm = low / torch.norm(low, dim=1, keepdim=True)
     high_norm = high / torch.norm(high, dim=1, keepdim=True)
