@@ -2,6 +2,7 @@ import gradio as gr
 import torch
 
 import modules.scripts as scripts
+import math
 from modules import processing
 
 
@@ -20,6 +21,7 @@ class Script(scripts.Script):
         self.target_prompt = None
         self.steps = None
         self.interp_func = None
+        self.target_seed = None
 
     def title(self):
         return "latent interpolation"
@@ -28,18 +30,21 @@ class Script(scripts.Script):
         target_prompt = gr.Textbox(label="Target prompt", lines=1)
         steps = gr.Slider(label="Interpolation steps", minimum=1, maximum=150, step=1, value=10)
         interp_func = gr.Textbox(label="Interpolation function", lines=1, value="x")
+        target_seed = gr.Textbox(label="Target seed", lines=1)
 
         return [
             target_prompt,
             steps,
             interp_func,
+            target_seed,
         ]
 
-    def run(self, p, target_prompt, steps, interp_func):
+    def run(self, p, target_prompt, steps, interp_func, target_seed):
         # Override
         self.target_prompt = target_prompt
         self.steps = steps
         self.interp_func = interp_func
+        self.target_seed = target_seed
 
         orig_sampler_fn = p.sample
         first_latent = None
@@ -77,6 +82,8 @@ class Script(scripts.Script):
         images.append(processed.images[0])
 
         p.prompt = self.target_prompt
+        if self.target_seed is not None:
+            p.seed = int(self.target_seed)
         # Sample the target prompt now
         print("Sampling the target prompt")
         processed = processing.process_images(p)
@@ -88,7 +95,8 @@ class Script(scripts.Script):
         print(f"Running latent interpolation for {self.steps} steps")
         for i in range(1, self.steps):
             # Set slerp'd latent for current step
-            cur_latent = slerp(i / self.steps, first_latent, target_latent)
+            factor = eval(self.interp_func, {"x": i / self.steps, "math": math, })
+            cur_latent = slerp(factor, first_latent, target_latent)
             processed = processing.process_images(p)
             images.append(processed.images[0])
 
